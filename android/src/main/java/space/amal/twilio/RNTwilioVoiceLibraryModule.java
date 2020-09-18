@@ -41,8 +41,10 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 import com.twilio.voice.AudioCodec;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
@@ -611,14 +613,15 @@ public class RNTwilioVoiceLibraryModule extends ReactContextBaseJavaModule imple
      *
      */
     private void registerForCallInvites() {
-        FirebaseApp.initializeApp(getReactApplicationContext());
-        final String fcmToken = FirebaseInstanceId.getInstance().getToken();
-        if (fcmToken != null) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Registering with FCM");
+        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+            @Override
+            public void onSuccess(InstanceIdResult instanceIdResult) {
+                String fcmToken = instanceIdResult.getToken();
+                if (BuildConfig.DEBUG)
+                    Log.i(TAG, "Registering with FCM");
+                Voice.register(accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
             }
-            Voice.register(accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
-        }
+        });
     }
 
     @ReactMethod
